@@ -1,4 +1,7 @@
+using GraphNet;
 using GraphNet.Extensions;
+using GraphNet.Graphql.Queries;
+using GraphNet.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
 var configuration = builder.Configuration;
@@ -8,9 +11,15 @@ var configuration = builder.Configuration;
 builder.Services.AddControllers();
 builder.Services.ConfigureCors();
 builder.Services.ConfigureDb(configuration);
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+builder.Services.AddAuthorization();
+builder.Services.ConfigureInjections();
+builder.Services.AddAutoMapper(typeof(Program));
+builder.Services.AddGraphQLServer()
+    .RegisterDbContext<ApplicationContext>(DbContextKind.Pooled)
+    .RegisterService<CategoryRepository>()
+    .AddQueryType<CategoryQuery>();
 
 var app = builder.Build();
 
@@ -21,10 +30,9 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-// app.UseHttpsRedirection();
 app.UseCors("DefaultPolicy");
 app.UseAuthorization();
-
+app.MapGraphQL(path: "/graphql");
 app.MapControllers();
 
 app.Run();
